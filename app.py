@@ -7,6 +7,7 @@ from marker.output import text_from_rendered
 import pandas as pd
 import tempfile
 from datetime import datetime
+from extract_tables import extract_tables
 
 app = Flask(__name__)
 
@@ -54,8 +55,11 @@ def webhook():
 
         # Process the PDF
         extracted_text = process_pdf(pdf_path)
-        print("extracted_text", extracted_text)
+        # print("extracted_text", extracted_text)
+        table_strings = extract_tables(extracted_text)
+        print("table_strings", table_strings)
         os.remove(pdf_path)
+        
 
         
 

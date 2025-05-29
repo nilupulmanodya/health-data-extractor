@@ -6,13 +6,7 @@ def clean_cell(cell_text):
     cleaned = cell_text.replace("<br>", " ").strip()
     return re.sub(r'\s+', ' ', cleaned)
 
-def extract_individual_tables_from_file(input_file_path):
-    try:
-        with open(input_file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-    except FileNotFoundError:
-        print(f"Error: Input file '{input_file_path}' not found.")
-        return []
+def extract_individual_tables_from_file(content):
 
     page_start_pattern = r"(?:(?:####\s*)?\*\*INSTITUTE ON AGING SOUTHERN CALIFORNIA LLC.*?SAN BERNARDINO, CA 92408 \d+\*\*)"
     matches = list(re.finditer(page_start_pattern, content, flags=re.MULTILINE | re.DOTALL))
@@ -271,45 +265,34 @@ def parse_eob_table(table_string, ongoing_member_context=None):
             continue 
     return members_completed_this_block, current_member_info
 
-def main():
-    input_file = 'outputs/output.txt' 
-    output_json = 'outputs/extracted_tables.json' 
-    try:
-        with open(input_file, 'r', encoding='utf-8') as f:
-            if not f.read().strip(): raise FileNotFoundError 
-    except FileNotFoundError:
-        print(f"Error: '{input_file}' not found or is empty. Please ensure it exists and contains your EOB data.")
-        return 
+def extract_tables(unstructured_text, output_json_path=None):
 
-    table_strings = extract_individual_tables_from_file(input_file)
-    # print(f"Extracted {len(table_strings)} table blocks from '{input_file}'") 
+    table_strings = extract_individual_tables_from_file(unstructured_text)
     all_members_data = []
     carried_over_member_info_state = None 
     last_block_completed_members_count = 0
 
     for i, table_str in enumerate(table_strings):
-        # print(f"\n--- Parsing Table Block {i+1} ---") 
-        if not table_str.strip(): print(f"Skipping empty table block {i+1}"); continue
+        if not table_str.strip(): 
+            print(f"Skipping empty table block {i+1}")
+            continue
         
         completed_members_in_block, carried_over_member_info_state = parse_eob_table(table_str, carried_over_member_info_state)
         all_members_data.extend(completed_members_in_block)
         last_block_completed_members_count = len(completed_members_in_block)
-        # print(f"--- Finished Block {i+1}. Completed: {len(completed_members_in_block)}. Carry-over: {carried_over_member_info_state.get('Patient Name') if carried_over_member_info_state else 'None'}")
 
-    if carried_over_member_info_state : 
+    if carried_over_member_info_state: 
         if carried_over_member_info_state.get("claims") or \
            (last_block_completed_members_count == 0 and len(all_members_data) == 0 and len(table_strings) > 0):
             all_members_data.append(carried_over_member_info_state)
 
-    try:
-        with open(output_json, 'w', encoding='utf-8') as json_file: json.dump(all_members_data, json_file, indent=2)
-        print(f"\nSuccessfully saved parsed data to '{output_json}'")
-    except Exception as e: print(f"\nError saving to JSON file: {str(e)}")
+    if output_json_path:
+        try:
+            with open(output_json_path, 'w', encoding='utf-8') as json_file:
+                json.dump(all_members_data, json_file, indent=2)
+            print(f"\nSuccessfully saved parsed data to '{output_json_path}'")
+        except Exception as e:
+            print(f"\nError saving to JSON file: {str(e)}")
     
-    print(f"\n--- Total Members Parsed to JSON: {len(all_members_data)} ---")
-    # for member_idx, member_data in enumerate(all_members_data): # Optional: print summary
-    #    print(f"Member {member_idx+1}: {member_data.get('Patient Name', 'N/A')} - Claims: {len(member_data.get('claims',[]))}")
-
-
-if __name__ == "__main__":
-    main()
+    print(f"\n--- Total Members Parsed: {len(all_members_data)} ---")
+    return all_members_data
