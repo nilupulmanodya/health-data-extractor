@@ -9,6 +9,7 @@ import tempfile
 from datetime import datetime
 from extract_tables import extract_tables
 from json_to_excel import json_to_excel
+from io import BytesIO
 
 app = Flask(__name__)
 
@@ -56,22 +57,24 @@ def webhook():
 
         # Process the PDF
         extracted_text = process_pdf(pdf_path)
-        # print("extracted_text", extracted_text)
         table_strings = extract_tables(extracted_text)
-        # print("table_strings", table_strings)
         
-        # temp_xlname = f"{timestamp}_excel.xlsx"
+        # Get DataFrame and Excel bytes from json_to_excel
+        _, excel_bytes = json_to_excel(table_strings)
         
-        # excel_path = os.path.join(app.config['UPLOAD_FOLDER'],temp_xlname)
-        excel_file = json_to_excel(table_strings)
-        print("excel_file", excel_file)
+        if excel_bytes is None:
+            return jsonify({'error': 'Failed to create Excel file'}), 500
 
         # Clean up the PDF file
         os.remove(pdf_path)
 
+        # Create BytesIO object from the Excel bytes
+        excel_buffer = BytesIO(excel_bytes)
+        excel_buffer.seek(0)
+
         # Send the Excel file back to the client
         return send_file(
-            excel_file,
+            excel_buffer,
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             as_attachment=True,
             download_name=f'extracted_data_{timestamp}.xlsx'

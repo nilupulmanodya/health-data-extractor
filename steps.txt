@@ -1,2 +1,0 @@
-create and activate virtual enviroment
-pip install marker-pdf 1.7.3
