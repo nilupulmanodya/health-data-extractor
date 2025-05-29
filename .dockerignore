@@ -1,0 +1,14 @@
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+*.log
+temp_uploads/*
+!temp_uploads/.gitkeep
+extracted_tables_final.json 
