@@ -8,6 +8,7 @@ import pandas as pd
 import tempfile
 from datetime import datetime
 from extract_tables import extract_tables
+from json_to_excel import json_to_excel
 
 app = Flask(__name__)
 
@@ -57,30 +58,24 @@ def webhook():
         extracted_text = process_pdf(pdf_path)
         # print("extracted_text", extracted_text)
         table_strings = extract_tables(extracted_text)
-        print("table_strings", table_strings)
+        # print("table_strings", table_strings)
+        
+        # temp_xlname = f"{timestamp}_excel.xlsx"
+        
+        # excel_path = os.path.join(app.config['UPLOAD_FOLDER'],temp_xlname)
+        excel_file = json_to_excel(table_strings)
+        print("excel_file", excel_file)
+
+        # Clean up the PDF file
         os.remove(pdf_path)
-        
 
-        
-
-        # # Create a temporary Excel file
-        # with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
-        #     # Convert the extracted text to a DataFrame
-        #     # You might want to modify this based on your specific data structure
-        #     df = pd.DataFrame({'Extracted Text': [extracted_text]})
-        #     df.to_excel(tmp.name, index=False)
-            
-        #     # Clean up the temporary PDF
-        #     os.remove(pdf_path)
-            
-        #     # Send the Excel file
-        #     return send_file(
-        #         tmp.name,
-        #         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        #         as_attachment=True,
-        #         download_name=f'extracted_data_{timestamp}.xlsx'
-        #     )
-        return jsonify({'extracted_text': extracted_text})
+        # Send the Excel file back to the client
+        return send_file(
+            excel_file,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=f'extracted_data_{timestamp}.xlsx'
+        )
 
     except Exception as e:
         # Clean up in case of error
