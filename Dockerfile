@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y \
 
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Copy the rest of the application
 COPY . .
@@ -20,5 +21,5 @@ RUN mkdir -p temp_uploads
 # Expose the port the app runs on
 EXPOSE 5000
 
-# Command to run the application
-CMD ["python", "app.py"] 
+# Command to run the application with explicit host and port
+CMD ["python", "app.py", "--host", "0.0.0.0", "--port", "5000"] 

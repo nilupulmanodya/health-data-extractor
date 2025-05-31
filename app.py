@@ -4,8 +4,6 @@ from werkzeug.utils import secure_filename
 from marker.converters.pdf import PdfConverter
 from marker.models import create_model_dict
 from marker.output import text_from_rendered
-import pandas as pd
-import tempfile
 from datetime import datetime
 from extract_tables import extract_tables
 from json_to_excel import json_to_excel
